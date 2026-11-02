@@ -1,5 +1,10 @@
-.vscode
-build
-dist
+target/
+.vscode/
+optimizer_log.txt
+optimizer_log.txt.*.bak
+*.py[cod]
+__pycache__/
+build/
+dist/
 cleaner.dll
 main.spec

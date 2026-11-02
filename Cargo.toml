@@ -1,0 +1,30 @@
+[package]
+name = "cs2-optimizer"
+version = "2.2.0"
+edition = "2021"
+authors = ["eco1kd"]
+description = "High-performance native Counter-Strike 2 optimizer written in Rust"
+
+[dependencies]
+colored = "2.1"
+
+[target.'cfg(windows)'.dependencies]
+winreg = "0.52"
+
+[target.'cfg(windows)'.dependencies.windows-sys]
+version = "0.59"
+features = [
+    "Win32_Foundation",
+    "Win32_Security",
+    "Win32_System_Threading",
+    "Win32_System_Diagnostics_ToolHelp",
+    "Win32_System_Registry",
+    "Win32_Storage_FileSystem",
+]
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+panic = "abort"
+strip = true
