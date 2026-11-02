@@ -4,7 +4,7 @@
 
 ### Высокопроизводительный нативный оптимизатор Counter-Strike 2
 
-![GitHub release](https://img.shields.io/github/v/release/fsociety659/cs2-hybrid-optimizer?style=for-the-badge)
+![GitHub release](https://img.shields.io/github/v/release/eco1kd/cs2-hybrid-optimizer?style=for-the-badge)
 ![Platform](https://img.shields.io/badge/Платформа-Windows%2010%20%7C%2011-blue?style=for-the-badge)
 ![Language](https://img.shields.io/badge/Язык-Rust%20🦀-orange?style=for-the-badge)
 ![License](https://img.shields.io/badge/License-MIT-yellow?style=for-the-badge)
