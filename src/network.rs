@@ -29,6 +29,20 @@ pub fn tune_tcp_latency() -> Result<usize, String> {
     }
 }
 
+pub fn read_mmcss_state() -> (Option<u32>, Option<u32>) {
+    #[cfg(windows)]
+    {
+        let hklm = RegKey::predef(HKEY_LOCAL_MACHINE);
+        let profile_path = r"SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile";
+        if let Ok(key) = hklm.open_subkey_with_flags(profile_path, KEY_READ) {
+            let sys_resp = key.get_value::<u32, _>("SystemResponsiveness").ok();
+            let net_thr = key.get_value::<u32, _>("NetworkThrottlingIndex").ok();
+            return (sys_resp, net_thr);
+        }
+    }
+    (None, None)
+}
+
 pub fn tune_mmcss() -> Result<(), String> {
     #[cfg(windows)]
     {
@@ -47,5 +61,27 @@ pub fn tune_mmcss() -> Result<(), String> {
     #[cfg(not(windows))]
     {
         Ok(())
+    }
+}
+
+pub fn restore_mmcss_state(sys_resp: Option<u32>, net_throttle: Option<u32>) {
+    #[cfg(not(windows))]
+    {
+        let _ = (sys_resp, net_throttle);
+    }
+    #[cfg(windows)]
+    {
+        let hklm = RegKey::predef(HKEY_LOCAL_MACHINE);
+        let profile_path = r"SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile";
+        if let Ok((key, _)) = hklm.create_subkey_with_flags(profile_path, KEY_SET_VALUE) {
+            match sys_resp {
+                Some(val) => { let _ = key.set_value("SystemResponsiveness", &val); }
+                None => { let _ = key.delete_value("SystemResponsiveness"); }
+            }
+            match net_throttle {
+                Some(val) => { let _ = key.set_value("NetworkThrottlingIndex", &val); }
+                None => { let _ = key.delete_value("NetworkThrottlingIndex"); }
+            }
+        }
     }
 }

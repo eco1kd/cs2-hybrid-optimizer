@@ -43,19 +43,26 @@ The primary goal is to improve:
 | Component | Role | Technologies |
 | --- | --- | --- |
 | Core Engine | Memory-safe, zero-allocation native Windows execution | `Rust 2021`, `windows-sys`, `winreg`, `ntdll`, `kernel32` |
-| NT Kernel Layer | Standby List purge, High-Precision ~0.5ms timer lock | Native NT API (`NtSetSystemInformation`, `NtSetTimerResolution`) |
+| Snapshot & Restore Engine | Automatic pre-optimizer snapshot and full 1-click reversal | JSON state snapshot (`optimizer_backup.json`), `serde`, direct registry/power restoration |
+| NT Kernel Layer | Standby List purge, High-Precision ~0.5ms timer lock, RAM kernel locking | Native NT API (`NtSetSystemInformation`, `NtSetTimerResolution`, `DisablePagingExecutive`) |
 | Network Layer | Nagle's algorithm disable (`TcpAckFrequency = 1`, `TCPNoDelay = 1`) & MMCSS profile uncapping | Windows Registry (`Tcpip\Parameters\Interfaces`, `SystemProfile`) |
-| Game Integration | Steam library discovery, Sub-Tick autoexec, Defender exclusions | Steam VDF parser, `steam.exe -applaunch 730`, Win32 Toolhelp32 |
+| Game Integration | Steam library discovery, Safe Sub-Tick autoexec, P-Core Affinity | Steam VDF parser, `steam.exe -applaunch 730`, Win32 Toolhelp32, `SetProcessAffinityMask` |
 
 ---
 
 ## Features
 
+### Snapshot & Restore (Undo / Revert)
+- **Automatic System Snapshot**: On first run, captures exact pre-optimizer registry states, power plan GUID, and creates a backup of `autoexec.cfg` in `optimizer_backup.json`.
+- **1-Click Revert**: Option 2 in the menu or running with `--revert` restores all original Windows settings and restores previous autoexec configurations.
+- **Clean-Only Mode**: Option 3 in the menu or running with `--clean-only` purges caches and Standby List without touching the registry.
+
 ### Cache & Memory
 - **GPU Cache Reset**: Purges D3DSCache, NVIDIA DXCache/GLCache/ComputeCache, AMD DxCache/DxcCache/OglCache/VkCache, and Intel ShaderCache.
 - **Steam Shader Cache Cleanup**: Cleans AppID 730 shader data in `steamapps/shadercache/730`.
-- **RAM Standby List Purge**: Calls NT API with `SeProfileSingleProcessPrivilege` to flush standby memory pages.
-- **High-Precision System Timer**: Requests and locks timer resolution to ~0.5ms (instead of default 15.6ms) for the duration of the game session.
+- **RAM Standby List Purge**: Calls NT API with `SeProfileSingleProcessPrivilege` to flush standby memory pages without purging working sets of active background apps.
+- **Safe NT Kernel RAM Lock**: Applies `DisablePagingExecutive = 1` only on systems with **$\ge$ 16 GB of physical RAM** (verified natively via `GlobalMemoryStatusEx`). Automatically skipped on lower memory systems to prevent Non-Paged Pool exhaustion and BSODs.
+- **High-Precision System Timer**: Requests and locks timer resolution to ~0.5ms with fail-safe `SetConsoleCtrlHandler` protection (restores timer even on Ctrl+C or window close).
 
 ### System & Network
 - **TCP Latency Tuning**: Disables packet buffering (Nagle's algorithm) on all network adapters for instantaneous Sub-Tick hit registration.
@@ -65,12 +72,14 @@ The primary goal is to improve:
 - **Fullscreen Optimizations**: Disables hybrid fullscreen DWM optimizations for `cs2.exe`.
 - **GameDVR**: Disables Xbox GameBar background recording hooks.
 - **DNS Flush**: Clears DNS cache before connecting to matchmaking.
+- **100% Native Code**: No `wmic` or `taskkill` subprocesses; process enumeration and termination are handled directly via Win32 API.
 
 ### CS2 Launch & Background Watcher
 - **Multi-Drive Library Support**: Automatically detects CS2 across any SSD drive or library folder.
-- **Sub-Tick `autoexec.cfg`**: Writes modern Sub-Tick commands (`engine_low_latency_sleep_after_client_tick true`, `cl_net_buffer_ticks 0`, rates) while **preserving backups** of existing configs.
+- **Safe Sub-Tick `autoexec.cfg`**: Injects an isolated optimizer block with `rate 1000000` while preserving your personal binds, crosshairs, and sensitivity intact.
+- **P-Core Affinity for Hybrid CPUs**: Calculates Performance-Core affinity mask to prevent frame drops on Intel 12th-14th+ Gen hybrid processors.
 - **Native Steam AppLaunch**: Starts CS2 via `steam.exe -applaunch 730` ensuring all parameters are passed.
-- **Native Background Booster**: Thread polls for `cs2.exe` and elevates its process priority to `HIGH_PRIORITY_CLASS`.
+- **Native Background Booster**: Thread monitors `cs2.exe`, elevates priority to `HIGH_PRIORITY_CLASS`, and locks P-Core affinity.
 
 ---
 

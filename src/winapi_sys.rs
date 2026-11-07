@@ -1,20 +1,26 @@
+#[cfg(windows)]
 use std::ffi::c_void;
 
 #[cfg(windows)]
 pub use windows_sys::Win32::{
-    Foundation::{CloseHandle, GetLastError, HANDLE, INVALID_HANDLE_VALUE, LUID},
+    Foundation::{
+        CloseHandle, GetLastError, BOOL, HANDLE, INVALID_HANDLE_VALUE, LUID,
+    },
     Security::{
         AdjustTokenPrivileges, LookupPrivilegeValueA, TOKEN_ADJUST_PRIVILEGES,
         TOKEN_PRIVILEGES, TOKEN_QUERY,
     },
     System::{
+        Console::SetConsoleCtrlHandler,
         Diagnostics::ToolHelp::{
             CreateToolhelp32Snapshot, Process32First, Process32Next, PROCESSENTRY32,
             TH32CS_SNAPPROCESS,
         },
+        SystemInformation::{GlobalMemoryStatusEx, MEMORYSTATUSEX},
         Threading::{
             GetCurrentProcess, OpenProcess, OpenProcessToken, SetPriorityClass,
-            HIGH_PRIORITY_CLASS, PROCESS_QUERY_LIMITED_INFORMATION, PROCESS_SET_INFORMATION,
+            SetProcessAffinityMask, TerminateProcess, HIGH_PRIORITY_CLASS,
+            PROCESS_QUERY_LIMITED_INFORMATION, PROCESS_SET_INFORMATION, PROCESS_TERMINATE,
         },
     },
 };

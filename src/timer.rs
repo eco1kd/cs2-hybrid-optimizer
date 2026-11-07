@@ -1,6 +1,19 @@
 #[cfg(windows)]
 use crate::winapi_sys::*;
 
+#[cfg(windows)]
+unsafe extern "system" fn console_ctrl_handler(_ctrl_type: u32) -> BOOL {
+    restore_timer_resolution();
+    0
+}
+
+pub fn register_console_ctrl_handler() {
+    #[cfg(windows)]
+    unsafe {
+        let _ = SetConsoleCtrlHandler(Some(console_ctrl_handler), 1);
+    }
+}
+
 pub fn request_high_precision_timer() -> Option<f64> {
     #[cfg(windows)]
     unsafe {
